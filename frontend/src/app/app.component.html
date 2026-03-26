@@ -1,0 +1,115 @@
+<div class="app-container">
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" routerLink="/home">
+        <i class="fas fa-graduation-cap me-2"></i>
+        Smart E-Learning
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/home" routerLinkActive="active">
+              <i class="fas fa-home me-1"></i>Home
+            </a>
+          </li>
+          <li class="nav-item" *ngIf="isLoggedIn">
+            <a class="nav-link" routerLink="/courses" routerLinkActive="active">
+              <i class="fas fa-book me-1"></i>Courses
+            </a>
+          </li>
+          <li class="nav-item" *ngIf="isLoggedIn">
+            <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
+              <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+            </a>
+          </li>
+          <li class="nav-item" *ngIf="isLoggedIn">
+            <a class="nav-link" routerLink="/recommendations" routerLinkActive="active">
+              <i class="fas fa-lightbulb me-1"></i>Recommendations
+            </a>
+          </li>
+          <li class="nav-item" *ngIf="isLoggedIn">
+            <a class="nav-link" routerLink="/leaderboard" routerLinkActive="active">
+              <i class="fas fa-trophy me-1"></i>Leaderboard
+            </a>
+          </li>
+        </ul>
+
+        <ul class="navbar-nav" *ngIf="!isLoggedIn">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/auth/login" routerLinkActive="active">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/auth/signup" routerLinkActive="active">Sign Up</a>
+          </li>
+        </ul>
+
+        <ul class="navbar-nav" *ngIf="isLoggedIn">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+              <i class="fas fa-user me-1"></i>{{ currentUser?.name }}
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" routerLink="/profile">
+                <i class="fas fa-user-circle me-2"></i>Profile
+              </a></li>
+              <li><a class="dropdown-item" routerLink="/progress">
+                <i class="fas fa-chart-line me-2"></i>My Progress
+              </a></li>
+              <li><a class="dropdown-item" routerLink="/badges">
+                <i class="fas fa-medal me-2"></i>My Badges
+              </a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" (click)="logout()" style="cursor: pointer;">
+                <i class="fas fa-sign-out-alt me-2"></i>Logout
+              </a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-light py-4 mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <h5>Smart E-Learning Platform</h5>
+          <p>Personalized learning experience powered by AI/ML recommendations.</p>
+        </div>
+        <div class="col-md-3">
+          <h6>Quick Links</h6>
+          <ul class="list-unstyled">
+            <li><a href="#" class="text-light">About Us</a></li>
+            <li><a href="#" class="text-light">Contact</a></li>
+            <li><a href="#" class="text-light">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h6>Follow Us</h6>
+          <div class="social-links">
+            <a href="#" class="text-light me-3"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="text-light me-3"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="text-light me-3"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="text-light"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+      </div>
+      <hr>
+      <div class="text-center">
+        <p>&copy; 2024 Smart E-Learning Platform. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>

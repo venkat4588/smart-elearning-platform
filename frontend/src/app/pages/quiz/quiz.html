@@ -1,0 +1,334 @@
+<div class="quiz-container" *ngIf="quiz">
+  <!-- Quiz Header -->
+  <div class="quiz-header" *ngIf="!quizCompleted">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <button class="btn btn-outline-light me-3" (click)="goBack()">
+            <i class="fas fa-arrow-left me-2"></i>Back to Courses
+          </button>
+          <h4 class="mb-0 text-white">{{ quiz.title }}</h4>
+        </div>
+        <div class="col-md-6 text-end" *ngIf="quizStarted && timeLimit > 0">
+          <div class="timer">
+            <i class="fas fa-clock me-2"></i>
+            <span class="timer-text">{{ formatTime(timeRemaining) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid py-4">
+    <!-- Quiz Start Screen -->
+    <div *ngIf="!quizStarted && !quizCompleted" class="quiz-start">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card quiz-card">
+            <div class="card-body text-center">
+              <div class="quiz-icon mb-4">
+                <i class="fas fa-question-circle fa-4x text-primary"></i>
+              </div>
+              <h2 class="card-title">{{ quiz.title }}</h2>
+              <p class="card-text text-muted mb-4">{{ quiz.description }}</p>
+
+              <div class="quiz-info mb-4">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="info-item">
+                      <i class="fas fa-list-ol fa-2x text-info mb-2"></i>
+                      <h5>{{ quiz.questions.length }}</h5>
+                      <small class="text-muted">Questions</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4" *ngIf="timeLimit > 0">
+                    <div class="info-item">
+                      <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                      <h5>{{ timeLimit }}</h5>
+                      <small class="text-muted">Minutes</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="info-item">
+                      <i class="fas fa-trophy fa-2x text-success mb-2"></i>
+                      <h5>{{ getPassingScore() }}%</h5>
+                      <small class="text-muted">Passing Score</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                Make sure you have a stable internet connection. Once started, the quiz cannot be paused.
+              </div>
+
+              <button class="btn btn-primary btn-lg" (click)="startQuiz()">
+                <i class="fas fa-play me-2"></i>Start Quiz
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz In Progress -->
+    <div *ngIf="quizStarted && !quizCompleted" class="quiz-progress">
+      <div class="row">
+        <!-- Question Navigation -->
+        <div class="col-lg-3 mb-4">
+          <div class="question-nav">
+            <h5 class="mb-3">Questions</h5>
+            <div class="question-grid">
+              <button
+                *ngFor="let question of quiz.questions; let i = index"
+                type="button"
+                class="question-number"
+                [class.active]="i === currentQuestionIndex"
+                [class.answered]="getQuestionStatus(i) === 'answered'"
+                (click)="goToQuestion(i)"
+              >
+                {{ i + 1 }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Content -->
+        <div class="col-lg-9">
+          <div class="question-card" *ngIf="getCurrentQuestion() as question">
+            <div class="question-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5>Question {{ currentQuestionIndex + 1 }} of {{ quiz.questions.length }}</h5>
+                <span class="badge bg-primary">{{ question.points }} points</span>
+              </div>
+            </div>
+
+            <div class="question-body">
+              <div class="question-text mb-4">
+                <h6>{{ question.question }}</h6>
+              </div>
+
+              <!-- Multiple Choice -->
+              <div *ngIf="question.type === 'mcq'" class="options">
+                <div
+                  *ngFor="let option of question.options; let i = index"
+                  class="option-item"
+                  [class.selected]="answers[question._id] === option"
+                  (click)="updateAnswer(question._id, option)"
+                >
+                  <div class="option-radio">
+                    <input
+                      type="radio"
+                      [name]="question._id"
+                      [value]="option"
+                      [(ngModel)]="answers[question._id]"
+                      class="form-check-input"
+                    >
+                  </div>
+                  <div class="option-text">
+                    <span class="option-letter">{{ getOptionLabel(i) }}.</span>
+                    {{ option }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Multiple Select -->
+              <div *ngIf="question.type === 'msq'" class="options">
+                <div
+                  *ngFor="let option of question.options; let i = index"
+                  class="option-item"
+                  [class.selected]="isMultiSelectOptionSelected(question._id, option)"
+                  (click)="toggleMultiSelectAnswer(question._id, option)"
+                >
+                  <div class="option-radio">
+                    <input
+                      type="checkbox"
+                      [checked]="isMultiSelectOptionSelected(question._id, option)"
+                      class="form-check-input"
+                    >
+                  </div>
+                  <div class="option-text">
+                    <span class="option-letter">{{ getOptionLabel(i) }}.</span>
+                    {{ option }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- True/False -->
+              <div *ngIf="question.type === 'true-false'" class="options">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div
+                      class="option-item"
+                      [class.selected]="answers[question._id] === 'true'"
+                      (click)="updateAnswer(question._id, 'true')"
+                    >
+                      <div class="option-radio">
+                        <input
+                          type="radio"
+                          [name]="question._id"
+                          value="true"
+                          [(ngModel)]="answers[question._id]"
+                          class="form-check-input"
+                        >
+                      </div>
+                      <div class="option-text">True</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div
+                      class="option-item"
+                      [class.selected]="answers[question._id] === 'false'"
+                      (click)="updateAnswer(question._id, 'false')"
+                    >
+                      <div class="option-radio">
+                        <input
+                          type="radio"
+                          [name]="question._id"
+                          value="false"
+                          [(ngModel)]="answers[question._id]"
+                          class="form-check-input"
+                        >
+                      </div>
+                      <div class="option-text">False</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Short Answer -->
+              <div *ngIf="question.type === 'essay' || question.type === 'fill-blank'" class="short-answer">
+                <textarea
+                  class="form-control"
+                  rows="4"
+                  placeholder="Type your answer here..."
+                  [(ngModel)]="answers[question._id]"
+                  (input)="updateAnswer(question._id, $any($event.target).value)"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="question-footer">
+              <div class="d-flex justify-content-between">
+                <button
+                  class="btn btn-outline-primary"
+                  (click)="previousQuestion()"
+                  [disabled]="currentQuestionIndex === 0"
+                >
+                  <i class="fas fa-arrow-left me-2"></i>Previous
+                </button>
+
+                <div class="question-status">
+                  <small class="text-muted">
+                    {{ getAnsweredCount() }} of {{ quiz.questions.length }} answered
+                  </small>
+                </div>
+
+                <button
+                  *ngIf="currentQuestionIndex < quiz.questions.length - 1"
+                  class="btn btn-primary"
+                  (click)="nextQuestion()"
+                >
+                  Next<i class="fas fa-arrow-right ms-2"></i>
+                </button>
+
+                <button
+                  *ngIf="currentQuestionIndex === quiz.questions.length - 1"
+                  class="btn btn-success"
+                  (click)="submitQuiz()"
+                  [disabled]="!canSubmit()"
+                >
+                  <i class="fas fa-paper-plane me-2"></i>Submit Quiz
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Results -->
+    <div *ngIf="quizCompleted && results" class="quiz-results">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card results-card">
+            <div class="card-body text-center">
+              <div class="result-icon mb-4">
+                <i
+                  class="fas fa-4x"
+                  [class]="isPassed() ? 'fa-trophy text-success' : 'fa-times-circle text-danger'"
+                ></i>
+              </div>
+
+              <h2 class="card-title mb-3">
+                {{ isPassed() ? 'Congratulations!' : 'Quiz Completed' }}
+              </h2>
+
+              <div class="score-display mb-4">
+                <div class="score-circle" [class.passed]="isPassed()">
+                  <div class="score-number">{{ getScorePercentage() }}%</div>
+                  <div class="score-label">Score</div>
+                </div>
+              </div>
+
+              <div class="results-details mb-4">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="result-item">
+                      <h4>{{ results.score }}</h4>
+                      <small class="text-muted">Points Earned</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="result-item">
+                      <h4>{{ getTotalPoints() }}</h4>
+                      <small class="text-muted">Total Points</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="result-item">
+                      <h4>{{ getCorrectAnswers() }}</h4>
+                      <small class="text-muted">Correct Answers</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="alert" [class]="isPassed() ? 'alert-success' : 'alert-warning'" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                {{ getPassMessage() }}
+              </div>
+
+              <div class="action-buttons">
+                <button class="btn btn-primary me-2" (click)="retakeQuiz()">
+                  <i class="fas fa-redo me-2"></i>Retake Quiz
+                </button>
+                <button class="btn btn-outline-primary" (click)="goBack()">
+                  <i class="fas fa-arrow-left me-2"></i>Back to Courses
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <p class="mt-2">Loading quiz...</p>
+</div>
+
+<!-- Error State -->
+<div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+  <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+  <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadQuiz()">
+    Retry
+  </button>
+</div>

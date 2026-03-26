@@ -1,0 +1,324 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Profile</h1>
+        <button class="btn btn-primary" routerLink="/dashboard">
+          <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading profile...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadProfile()">
+      Retry
+    </button>
+  </div>
+
+  <!-- Profile Content -->
+  <div *ngIf="profile && !loading && !error" class="row">
+    <!-- Profile Header -->
+    <div class="col-12 mb-4">
+      <div class="card profile-header">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+              <div class="profile-avatar">
+                <div class="avatar-circle">
+                  <span class="avatar-initials">{{ getUserInitials(profile.name) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="profile-info">
+                <h2 class="profile-name">{{ profile.name }}</h2>
+                <p class="profile-email">{{ profile.email }}</p>
+                <div class="profile-meta">
+                  <span class="badge bg-primary me-2">{{ profile.role }}</span>
+                  <span class="text-muted">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Joined {{ profile.joinDate | date:'MMM yyyy' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 text-center">
+              <button
+                class="btn btn-outline-primary"
+                (click)="isEditing ? cancelEditing() : startEditing()"
+              >
+                <i class="fas" [class]="isEditing ? 'fa-times' : 'fa-edit'"></i>
+                {{ isEditing ? 'Cancel' : 'Edit Profile' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="col-12 mb-4">
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-trophy text-warning"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ profile.points }}</h3>
+              <p class="mb-0">Points</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-level-up-alt text-info"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ profile.level }}</h3>
+              <p class="mb-0">Level</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-fire text-danger"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ profile.streak }}</h3>
+              <p class="mb-0">Day Streak</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-clock text-success"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ formatTime(profile.totalTimeSpent) }}</h3>
+              <p class="mb-0">Time Spent</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Level Progress -->
+    <div class="col-12 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Level Progress</h5>
+          <div class="level-progress">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span>Level {{ profile.level }}</span>
+              <span>{{ profile.points }} / {{ profile.level * 1000 }} points</span>
+            </div>
+            <div class="progress">
+              <div
+                class="progress-bar bg-primary"
+                [style.width.%]="getLevelProgress()"
+                role="progressbar"
+                [attr.aria-valuenow]="getLevelProgress()"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+            <small class="text-muted mt-1">
+              {{ (profile.level * 1000) - profile.points }} points to next level
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Details -->
+    <div class="col-lg-8 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Profile Information</h5>
+        </div>
+        <div class="card-body">
+          <!-- View Mode -->
+          <div *ngIf="!isEditing">
+            <div class="profile-section">
+              <h6>About</h6>
+              <p *ngIf="profile.bio; else noBio">{{ profile.bio }}</p>
+              <ng-template #noBio>
+                <p class="text-muted">No bio added yet.</p>
+              </ng-template>
+            </div>
+
+            <div class="profile-section">
+              <h6>Interests</h6>
+              <div class="tags-container">
+                <span *ngFor="let interest of profile.interests" class="badge bg-secondary me-2 mb-2">
+                  {{ interest }}
+                </span>
+                <span *ngIf="profile.interests.length === 0" class="text-muted">No interests added yet.</span>
+              </div>
+            </div>
+
+            <div class="profile-section">
+              <h6>Learning Goals</h6>
+              <div class="goals-container">
+                <div *ngFor="let goal of profile.learningGoals" class="goal-item">
+                  <i class="fas fa-check-circle text-success me-2"></i>
+                  {{ goal }}
+                </div>
+                <div *ngIf="profile.learningGoals.length === 0" class="text-muted">No learning goals set yet.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Mode -->
+          <div *ngIf="isEditing">
+            <form (ngSubmit)="saveProfile()">
+              <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="name"
+                  [(ngModel)]="editForm.name"
+                  name="name"
+                  required
+                >
+              </div>
+
+              <div class="mb-3">
+                <label for="bio" class="form-label">Bio</label>
+                <textarea
+                  class="form-control"
+                  id="bio"
+                  rows="3"
+                  [(ngModel)]="editForm.bio"
+                  name="bio"
+                  placeholder="Tell us about yourself..."
+                ></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Interests</label>
+                <div class="input-group mb-2">
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="newInterest"
+                    name="newInterest"
+                    placeholder="Add an interest..."
+                    (keyup.enter)="addInterest()"
+                  >
+                  <button class="btn btn-outline-primary" type="button" (click)="addInterest()">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+                <div class="tags-container">
+                  <span *ngFor="let interest of editForm.interests" class="badge bg-secondary me-2 mb-2">
+                    {{ interest }}
+                    <button type="button" class="btn-close btn-close-white ms-1" (click)="removeInterest(interest)"></button>
+                  </span>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Learning Goals</label>
+                <div class="input-group mb-2">
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="newGoal"
+                    name="newGoal"
+                    placeholder="Add a learning goal..."
+                    (keyup.enter)="addGoal()"
+                  >
+                  <button class="btn btn-outline-primary" type="button" (click)="addGoal()">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+                <div class="goals-container">
+                  <div *ngFor="let goal of editForm.learningGoals" class="goal-item">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    {{ goal }}
+                    <button type="button" class="btn-close ms-2" (click)="removeGoal(goal)"></button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+                <button type="button" class="btn btn-outline-secondary" (click)="cancelEditing()">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Learning Stats -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0">Learning Statistics</h6>
+        </div>
+        <div class="card-body">
+          <div class="stat-item">
+            <div class="d-flex justify-content-between">
+              <span>Enrolled Courses</span>
+              <strong>{{ profile.enrolledCourses }}</strong>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="d-flex justify-content-between">
+              <span>Completed Courses</span>
+              <strong>{{ profile.completedCourses }}</strong>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="d-flex justify-content-between">
+              <span>Badges Earned</span>
+              <strong>{{ profile.badges.length }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">Badges</h6>
+        </div>
+        <div class="card-body">
+          <div *ngIf="profile.badges.length > 0" class="badges-container">
+            <div *ngFor="let badge of profile.badges" class="badge-item">
+              <i class="fas fa-medal text-warning me-2"></i>
+              <span>{{ badge.name }}</span>
+            </div>
+          </div>
+          <div *ngIf="profile.badges.length === 0" class="text-center text-muted py-3">
+            <i class="fas fa-medal fa-2x mb-2"></i>
+            <p>No badges earned yet. Keep learning!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

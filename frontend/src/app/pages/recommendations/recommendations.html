@@ -1,0 +1,221 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">AI Recommendations</h1>
+        <button class="btn btn-primary" routerLink="/dashboard">
+          <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Analyzing your learning preferences...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadRecommendations()">
+      Retry
+    </button>
+  </div>
+
+  <!-- Recommendations Content -->
+  <div *ngIf="recommendations && !loading && !error">
+    <!-- AI Intro -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card ai-intro">
+          <div class="card-body text-center">
+            <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+            <h4>Personalized Learning Recommendations</h4>
+            <p class="text-muted mb-0">
+              Our AI analyzes your learning history, performance, and preferences to suggest the most relevant courses and content for you.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <ul class="nav nav-pills justify-content-center" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              [class.active]="activeTab === 'courses'"
+              (click)="setActiveTab('courses')"
+              type="button"
+            >
+              <i class="fas fa-book me-2"></i>Courses
+              <span class="badge bg-primary ms-2">{{ recommendations.courses.length }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              [class.active]="activeTab === 'quizzes'"
+              (click)="setActiveTab('quizzes')"
+              type="button"
+            >
+              <i class="fas fa-question-circle me-2"></i>Quizzes
+              <span class="badge bg-primary ms-2">{{ recommendations.quizzes.length }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              [class.active]="activeTab === 'topics'"
+              (click)="setActiveTab('topics')"
+              type="button"
+            >
+              <i class="fas fa-lightbulb me-2"></i>Topics
+              <span class="badge bg-primary ms-2">{{ recommendations.topics.length }}</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Courses Tab -->
+    <div *ngIf="activeTab === 'courses'" class="tab-content">
+      <div *ngIf="recommendations.courses.length > 0" class="row">
+        <div *ngFor="let course of recommendations.courses" class="col-xl-4 col-md-6 mb-4">
+          <div class="card recommendation-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-{{ getDifficultyColor(course.level) }}">{{ course.level }}</span>
+                <div class="match-score">
+                  <span class="badge bg-{{ getMatchScoreColor(course.matchScore) }}">
+                    {{ course.matchScore }}% Match
+                  </span>
+                </div>
+              </div>
+
+              <h5 class="card-title">{{ course.title }}</h5>
+              <p class="card-text text-muted small">{{ course.description | slice:0:100 }}...</p>
+
+              <div class="course-meta mb-3">
+                <small class="text-muted d-block">
+                  <i class="fas fa-tag me-1"></i>{{ course.category }}
+                </small>
+                <small class="text-muted d-block">
+                  <i class="fas fa-users me-1"></i>{{ course.enrolledCount }} enrolled
+                </small>
+                <div class="rating">
+                  <i class="fas fa-star text-warning"></i>
+                  <span class="ms-1">{{ course.rating || 0 }}</span>
+                </div>
+              </div>
+
+              <div class="recommendation-reason mb-3">
+                <div class="reason-header">
+                  <i class="fas fa-robot text-primary me-2"></i>
+                  <strong>Why recommended:</strong>
+                </div>
+                <p class="reason-text small text-muted">{{ course.reason }}</p>
+              </div>
+
+              <button class="btn btn-primary w-100" [routerLink]="['/courses', course._id]">
+                <i class="fas fa-eye me-2"></i>View Course
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="recommendations.courses.length === 0" class="text-center py-5">
+        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+        <h4>No Course Recommendations</h4>
+        <p class="text-muted">Complete some courses to get personalized recommendations!</p>
+      </div>
+    </div>
+
+    <!-- Quizzes Tab -->
+    <div *ngIf="activeTab === 'quizzes'" class="tab-content">
+      <div *ngIf="recommendations.quizzes.length > 0" class="row">
+        <div *ngFor="let quiz of recommendations.quizzes" class="col-xl-4 col-md-6 mb-4">
+          <div class="card recommendation-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-{{ getDifficultyColor(quiz.difficulty) }}">{{ quiz.difficulty }}</span>
+                <div class="match-score">
+                  <span class="badge bg-{{ getMatchScoreColor(quiz.matchScore) }}">
+                    {{ quiz.matchScore }}% Match
+                  </span>
+                </div>
+              </div>
+
+              <h5 class="card-title">{{ quiz.title }}</h5>
+              <p class="card-text text-muted small">{{ quiz.description | slice:0:100 }}...</p>
+
+              <div class="quiz-meta mb-3">
+                <small class="text-muted d-block">
+                  <i class="fas fa-tag me-1"></i>{{ quiz.category }}
+                </small>
+                <small class="text-muted d-block">
+                  <i class="fas fa-clock me-1"></i>{{ quiz.estimatedTime }} minutes
+                </small>
+              </div>
+
+              <div class="recommendation-reason mb-3">
+                <div class="reason-header">
+                  <i class="fas fa-robot text-primary me-2"></i>
+                  <strong>Why recommended:</strong>
+                </div>
+                <p class="reason-text small text-muted">{{ quiz.reason }}</p>
+              </div>
+
+              <button class="btn btn-success w-100" [routerLink]="['/quiz', quiz._id]">
+                <i class="fas fa-play me-2"></i>Take Quiz
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="recommendations.quizzes.length === 0" class="text-center py-5">
+        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+        <h4>No Quiz Recommendations</h4>
+        <p class="text-muted">Complete some quizzes to get personalized recommendations!</p>
+      </div>
+    </div>
+
+    <!-- Topics Tab -->
+    <div *ngIf="activeTab === 'topics'" class="tab-content">
+      <div *ngIf="recommendations.topics.length > 0" class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title mb-4">Recommended Topics to Explore</h5>
+              <div class="topics-grid">
+                <div *ngFor="let topic of recommendations.topics" class="topic-item">
+                  <div class="topic-card">
+                    <i class="fas fa-lightbulb topic-icon"></i>
+                    <h6>{{ topic }}</h6>
+                    <button class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-search me-1"></i>Explore
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="recommendations.topics.length === 0" class="text-center py-5">
+        <i class="fas fa-lightbulb fa-3x text-muted mb-3"></i>
+        <h4>No Topic Recommendations</h4>
+        <p class="text-muted">Complete more courses to discover new topics!</p>
+      </div>
+    </div>
+  </div>
+</div>

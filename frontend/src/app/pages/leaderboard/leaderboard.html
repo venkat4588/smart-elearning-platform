@@ -1,0 +1,222 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Leaderboard</h1>
+        <button class="btn btn-primary" routerLink="/dashboard">
+          <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Rank Card -->
+  <div *ngIf="userRank" class="row mb-4">
+    <div class="col-12">
+      <div class="card user-rank-card">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+              <div class="rank-display">
+                <div class="rank-number">#{{ userRank.rank }}</div>
+                <div class="rank-label">Your Rank</div>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="level-progress">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="level-text">Level {{ userRank.level }}</span>
+                  <span class="points-text">{{ userRank.points }} points</span>
+                </div>
+                <div class="progress">
+                  <div
+                    class="progress-bar bg-primary"
+                    [style.width.%]="userRank.progressToNext"
+                    role="progressbar"
+                    [attr.aria-valuenow]="userRank.progressToNext"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  ></div>
+                </div>
+                <small class="text-muted mt-1 d-block">
+                  {{ userRank.nextLevelPoints - userRank.points }} points to next level
+                </small>
+              </div>
+            </div>
+            <div class="col-md-3 text-center">
+              <div class="rank-badge">
+                <i class="fas fa-trophy fa-2x text-warning"></i>
+                <div class="badge-text">Keep Learning!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <ul class="nav nav-pills justify-content-center" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            [class.active]="activeTab === 'points'"
+            (click)="setActiveTab('points')"
+            type="button"
+          >
+            <i class="fas fa-trophy me-2"></i>Points
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            [class.active]="activeTab === 'level'"
+            (click)="setActiveTab('level')"
+            type="button"
+          >
+            <i class="fas fa-layer-group me-2"></i>Levels
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            [class.active]="activeTab === 'streak'"
+            (click)="setActiveTab('streak')"
+            type="button"
+          >
+            <i class="fas fa-fire me-2"></i>Streaks
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading leaderboard...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadLeaderboard(activeTab)">
+      Retry
+    </button>
+  </div>
+
+  <!-- Leaderboard -->
+  <div *ngIf="!loading && !error" class="row">
+    <div class="col-12">
+      <div class="leaderboard-container">
+        <!-- Top 3 Podium -->
+        <div *ngIf="leaderboard.length >= 3" class="podium-section mb-4">
+          <div class="podium">
+            <!-- 2nd Place -->
+            <div class="podium-item second">
+              <div class="podium-avatar">
+                <div class="avatar-circle">
+                  <span class="avatar-initials">{{ getUserInitials(leaderboard[1].user.name) }}</span>
+                </div>
+                <div class="rank-icon">
+                  <i class="fas fa-medal text-secondary"></i>
+                </div>
+              </div>
+              <div class="podium-info">
+                <h6>{{ leaderboard[1].user.name }}</h6>
+                <div class="points">{{ leaderboard[1].points }} pts</div>
+                <div class="level-badge">Level {{ leaderboard[1].level }}</div>
+              </div>
+              <div class="podium-base">2</div>
+            </div>
+
+            <!-- 1st Place -->
+            <div class="podium-item first">
+              <div class="podium-avatar">
+                <div class="avatar-circle winner">
+                  <span class="avatar-initials">{{ getUserInitials(leaderboard[0].user.name) }}</span>
+                </div>
+                <div class="rank-icon">
+                  <i class="fas fa-crown text-warning"></i>
+                </div>
+              </div>
+              <div class="podium-info">
+                <h5>{{ leaderboard[0].user.name }}</h5>
+                <div class="points">{{ leaderboard[0].points }} pts</div>
+                <div class="level-badge">Level {{ leaderboard[0].level }}</div>
+              </div>
+              <div class="podium-base winner">1</div>
+            </div>
+
+            <!-- 3rd Place -->
+            <div class="podium-item third">
+              <div class="podium-avatar">
+                <div class="avatar-circle">
+                  <span class="avatar-initials">{{ getUserInitials(leaderboard[2].user.name) }}</span>
+                </div>
+                <div class="rank-icon">
+                  <i class="fas fa-award text-warning"></i>
+                </div>
+              </div>
+              <div class="podium-info">
+                <h6>{{ leaderboard[2].user.name }}</h6>
+                <div class="points">{{ leaderboard[2].points }} pts</div>
+                <div class="level-badge">Level {{ leaderboard[2].level }}</div>
+              </div>
+              <div class="podium-base">3</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full Leaderboard List -->
+        <div class="leaderboard-list">
+          <div *ngFor="let entry of leaderboard; let i = index" class="leaderboard-entry" [class.current-user]="isCurrentUser(entry.user._id)">
+            <div class="entry-rank">
+              <span class="rank-number" [class]="getRankBadgeClass(entry.rank)">
+                #{{ entry.rank }}
+              </span>
+            </div>
+
+            <div class="entry-avatar">
+              <div class="avatar-circle small">
+                <span class="avatar-initials">{{ getUserInitials(entry.user.name) }}</span>
+              </div>
+            </div>
+
+            <div class="entry-info">
+              <div class="entry-name">{{ entry.user.name }}</div>
+              <div class="entry-stats">
+                <span class="stat-item">
+                  <i class="fas fa-book me-1"></i>{{ entry.coursesCompleted }}
+                </span>
+                <span class="stat-item">
+                  <i class="fas fa-question-circle me-1"></i>{{ entry.quizzesPassed }}
+                </span>
+                <span class="stat-item">
+                  <i class="fas fa-fire me-1"></i>{{ entry.streak }}
+                </span>
+              </div>
+            </div>
+
+            <div class="entry-level">
+              <span class="level-display" [class]="getLevelColor(entry.level)">
+                Level {{ entry.level }}
+              </span>
+            </div>
+
+            <div class="entry-points">
+              <div class="points-display">
+                <i class="fas fa-star text-warning me-1"></i>
+                {{ entry.points }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

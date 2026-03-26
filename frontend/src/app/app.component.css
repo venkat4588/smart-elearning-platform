@@ -1,0 +1,46 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 20px;
+  width: 100%;
+  min-height: 100px;
+}
+
+.navbar {
+  z-index: 1030;
+  width: 100%;
+}
+
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  border-radius: 10px;
+}
+
+.dropdown-item {
+  padding: 10px 20px;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+.social-links a {
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.social-links a:hover {
+  color: #667eea !important;
+}
+
+footer {
+  margin-top: auto;
+}

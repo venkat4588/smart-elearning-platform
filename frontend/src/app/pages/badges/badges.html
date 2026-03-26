@@ -1,0 +1,201 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Badges & Achievements</h1>
+        <button class="btn btn-primary" routerLink="/dashboard">
+          <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading badges...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadBadges()">
+      Retry
+    </button>
+  </div>
+
+  <!-- Badges Overview -->
+  <div *ngIf="!loading && !error" class="row mb-4">
+    <div class="col-12">
+      <div class="card badges-overview">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h4 class="mb-2">Your Achievement Progress</h4>
+              <p class="text-muted mb-0">Collect badges by completing challenges and reaching milestones</p>
+            </div>
+            <div class="col-md-6">
+              <div class="progress-stats">
+                <div class="stat-item">
+                  <div class="stat-number">{{ getEarnedCount() }}</div>
+                  <div class="stat-label">Earned</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">{{ getTotalCount() }}</div>
+                  <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">{{ getCompletionPercentage() }}%</div>
+                  <div class="stat-label">Complete</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="overall-progress mt-3">
+            <div class="progress">
+              <div
+                class="progress-bar bg-primary"
+                [style.width.%]="getCompletionPercentage()"
+                role="progressbar"
+                [attr.aria-valuenow]="getCompletionPercentage()"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <ul class="nav nav-pills justify-content-center" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            [class.active]="activeCategory === 'all'"
+            (click)="setActiveCategory('all')"
+            type="button"
+          >
+            <i class="fas fa-th me-2"></i>All Badges
+            <span class="badge bg-primary ms-2">{{ getTotalCount() }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            [class.active]="activeCategory === 'earned'"
+            (click)="setActiveCategory('earned')"
+            type="button"
+          >
+            <i class="fas fa-trophy me-2"></i>Earned
+            <span class="badge bg-success ms-2">{{ getEarnedCount() }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            [class.active]="activeCategory === 'available'"
+            (click)="setActiveCategory('available')"
+            type="button"
+          >
+            <i class="fas fa-lock me-2"></i>Available
+            <span class="badge bg-warning ms-2">{{ getTotalCount() - getEarnedCount() }}</span>
+          </button>
+        </li>
+        <li *ngFor="let category of categories" class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            [class.active]="activeCategory === category.name"
+            (click)="setActiveCategory(category.name)"
+            type="button"
+          >
+            <i class="fas fa-tag me-2"></i>{{ category.name }}
+            <span class="badge bg-secondary ms-2">{{ category.badges.length }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Badges Grid -->
+  <div class="row">
+    <div *ngFor="let badge of getFilteredBadges()" class="col-xl-3 col-lg-4 col-md-6 mb-4">
+      <div class="badge-card" [class.earned]="isEarned(badge)" [class.locked]="!isEarned(badge)">
+        <div class="badge-header">
+          <div class="badge-icon">
+            <i [class]="badge.icon" [class.locked-icon]="!isEarned(badge)"></i>
+            <div *ngIf="!isEarned(badge)" class="lock-overlay">
+              <i class="fas fa-lock"></i>
+            </div>
+          </div>
+          <div class="badge-rarity">
+            <i [class]="getRarityIcon(badge.rarity)"></i>
+            <span class="rarity-label">{{ badge.rarity | titlecase }}</span>
+          </div>
+        </div>
+
+        <div class="badge-body">
+          <h5 class="badge-name">{{ badge.name }}</h5>
+          <p class="badge-description">{{ badge.description }}</p>
+
+          <div class="badge-meta">
+            <span class="badge-category">{{ badge.category }}</span>
+            <span class="badge-points">{{ badge.points }} pts</span>
+          </div>
+
+          <!-- Earned Status -->
+          <div *ngIf="isEarned(badge)" class="earned-status">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <span>Earned {{ badge.earnedAt | date:'shortDate' }}</span>
+          </div>
+
+          <!-- Progress (for unearned badges) -->
+          <div *ngIf="!isEarned(badge) && badge.progress" class="progress-status">
+            <div class="progress-info">
+              <small class="text-muted">Progress</small>
+              <div class="progress mt-1">
+                <div
+                  class="progress-bar"
+                  [class]="'bg-' + getRarityColor(badge.rarity)"
+                  [style.width.%]="badge.progress.percentage"
+                  role="progressbar"
+                  [attr.aria-valuenow]="badge.progress.percentage"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
+              <small class="text-muted mt-1">
+                {{ badge.progress.current }} / {{ badge.progress.target }}
+              </small>
+            </div>
+          </div>
+
+          <!-- Locked Status -->
+          <div *ngIf="!isEarned(badge) && !badge.progress" class="locked-status">
+            <i class="fas fa-lock text-muted me-2"></i>
+            <span class="text-muted">Not yet earned</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Badges Found -->
+    <div *ngIf="getFilteredBadges().length === 0" class="col-12">
+      <div class="text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h4>No badges found</h4>
+        <p class="text-muted">Try selecting a different category.</p>
+        <button class="btn btn-outline-primary" (click)="setActiveCategory('all')">
+          Show All Badges
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,164 @@
+<div class="course-player-container" *ngIf="course">
+  <!-- Header -->
+  <div class="player-header">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <button class="btn btn-outline-light me-3" (click)="goBack()">
+            <i class="fas fa-arrow-left me-2"></i>Back to Courses
+          </button>
+          <h4 class="mb-0 text-white">{{ course.title }}</h4>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="progress-info">
+            <small class="text-white-50">Progress</small>
+            <div class="progress mt-1">
+              <div
+                class="progress-bar bg-success"
+                [style.width.%]="getProgressPercentage()"
+                role="progressbar"
+                [attr.aria-valuenow]="getProgressPercentage()"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                {{ getProgressPercentage() }}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid py-4">
+    <div class="row">
+      <!-- Sidebar - Lessons List -->
+      <div class="col-lg-3 mb-4">
+        <div class="lessons-sidebar">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Course Content</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="list-group list-group-flush">
+                <button
+                  *ngFor="let lesson of course.lessons; let i = index"
+                  type="button"
+                  class="list-group-item list-group-item-action lesson-item"
+                  [class.active]="isCurrentLesson(lesson._id)"
+                  [class.completed]="isLessonCompleted(lesson._id)"
+                  (click)="selectLesson(lesson._id)"
+                >
+                  <div class="d-flex align-items-center">
+                    <div class="lesson-icon me-3">
+                      <i [class]="getLessonIcon(getLessonType(lesson))"></i>
+                      <i *ngIf="isLessonCompleted(lesson._id)" class="fas fa-check checkmark"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="lesson-title">{{ lesson.title }}</div>
+                      <small class="text-muted">
+                        {{ getLessonType(lesson) | titlecase }}
+                        <span *ngIf="lesson.duration"> | {{ lesson.duration }} min</span>
+                      </small>
+                    </div>
+                    <div class="lesson-number">{{ i + 1 }}</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="col-lg-9">
+        <div class="lesson-content" *ngIf="currentLesson">
+          <!-- Lesson Header -->
+          <div class="lesson-header mb-4">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h3 class="lesson-title">{{ currentLesson.title }}</h3>
+                <div class="lesson-meta">
+                  <span class="badge bg-primary me-2">{{ getLessonType(currentLesson) | titlecase }}</span>
+                  <span *ngIf="currentLesson.duration" class="text-muted">
+                    <i class="fas fa-clock me-1"></i>{{ currentLesson.duration }} minutes
+                  </span>
+                </div>
+              </div>
+              <button
+                class="btn btn-success"
+                (click)="markLessonComplete()"
+                [disabled]="isLessonCompleted(currentLesson._id)"
+              >
+                <i class="fas fa-check me-2"></i>
+                {{ isLessonCompleted(currentLesson._id) ? 'Completed' : 'Mark Complete' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Lesson Content -->
+          <div class="lesson-body">
+            <!-- Text Content -->
+            <div *ngIf="getLessonType(currentLesson) === 'text'" class="text-content">
+              <div class="content-card">
+                <div>{{ currentLesson.description || 'Lesson content will appear here.' }}</div>
+              </div>
+            </div>
+
+            <!-- Video Content -->
+            <div *ngIf="getLessonType(currentLesson) === 'video'" class="video-content">
+              <div class="video-container" *ngIf="videoUrl">
+                <iframe
+                  [src]="videoUrl"
+                  frameborder="0"
+                  allowfullscreen
+                  class="video-iframe"
+                ></iframe>
+              </div>
+              <div *ngIf="!videoUrl" class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Video content is not available.
+              </div>
+              <div class="content-card mt-3" *ngIf="currentLesson.description">
+                <h5>Additional Notes</h5>
+                <div>{{ currentLesson.description }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="lesson-navigation mt-4">
+            <div class="d-flex justify-content-between">
+              <button class="btn btn-outline-primary" (click)="moveToNextLesson()">
+                <i class="fas fa-arrow-right me-2"></i>Next Lesson
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="!currentLesson && !loading" class="text-center py-5">
+          <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+          <h4>Select a lesson to begin</h4>
+          <p class="text-muted">Choose a lesson from the sidebar to start learning.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <p class="mt-2">Loading course content...</p>
+</div>
+
+<!-- Error State -->
+<div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+  <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+  <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadCourse()">
+    Retry
+  </button>
+</div>
